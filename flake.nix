@@ -5,21 +5,27 @@
   };
   outputs = { nixpkgs, ... }:
     let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs { inherit system; };
+      systems = [ "x86_64-linux" "aarch64-darwin" ];
+      pkgs = system: import nixpkgs { inherit system; };
+      forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f (pkgs system));
     in
     {
-      devShells.${system} = {
-        default = pkgs.mkShell {
-          packages = with pkgs; [
-            python313
-            python313Packages.pip
-            python313Packages.venvShellHook
-            python313Packages.pylint-venv
-            fish
-          ];
-          venvDir = "./.venv";
-        };
-      };
+      devShells = forAllSystems (
+        pkgs:
+        ({
+          default = pkgs.mkShell {
+            buildInputs = with pkgs.python313Packages; [
+              pkgs.python313
+              pip
+              ase
+              pylint-venv
+            ];
+            packages = with pkgs; [
+              fish
+            ];
+            venvDir = "./.venv";
+          };
+        })
+      );
     };
 }

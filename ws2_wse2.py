@@ -18,7 +18,6 @@ to_shift_w = [
     for (id, coord) in enumerate(wse2.get_scaled_positions())
     if -0.01 < coord[0] < 0.01
 ]
-print(to_shift_w)
 
 
 def translate_part(to_apply_atoms, to_shift_atom_idx, fractions, translation_vec):
@@ -62,12 +61,13 @@ s_fractions_upper = np.repeat(
     [i / to_shift_s_upper_len for i in range(1, to_shift_s_upper_len + 1)],
     2,
 )
+print("WS2 upper")
 translate_part(ws2, to_shift_s_upper, s_fractions_upper, translation_vec_by_a_ws2 * -1)
 # Stretch the row of S down
 to_shift_s_lower = [
     (id, coord)
     for (id, coord) in enumerate(ws2.get_scaled_positions())
-    if 0.875 < coord[0] < 1.00 and coord[1] < 0.4
+    if 0.876 < coord[0] < 1.00 and coord[1] < 0.4
 ]
 to_shift_s_lower_len = int(len(to_shift_s_lower) / 2)
 # the displacement becomes weaker
@@ -76,6 +76,7 @@ to_shift_s_lower_len = int(len(to_shift_s_lower) / 2)
 s_fractions_lower = np.repeat(
     [i / to_shift_s_lower_len for i in range(to_shift_s_lower_len, 0, -1)], 2
 )
+print("WS2 lower")
 translate_part(ws2, to_shift_s_lower, s_fractions_lower, translation_vec_by_a_ws2)
 
 # Shift whole WS2
@@ -93,10 +94,10 @@ hetero.center(10, axis=2)
 hetero.center(20, axis=0)
 hetero.positions[:, 2] -= 9.5
 unit_ws2.positions[0] += hetero.cell[0] * 0.50
-unit_ws2.positions[0] += hetero.cell[1] * 0.4548
+unit_ws2.positions[0] += hetero.cell[1] * 0.4568
 unit_ws2.positions[0] += hetero.cell[2] * 0.09034
-unit_ws2.positions[1:3] += hetero.cell[0] * 0.505
-unit_ws2.positions[1:3] += hetero.cell[1] * 0.459
+unit_ws2.positions[1:3] += hetero.cell[0] * 0.495
+unit_ws2.positions[1:3] += hetero.cell[1] * 0.455
 unit_ws2.positions[1:3] += hetero.cell[2] * 0.09034
 unit_ws2.set_cell(hetero.cell)
 print(unit_ws2.get_scaled_positions())

@@ -1,0 +1,112 @@
+units real 
+dimension 3
+atom_style atomic
+boundary f p f
+
+neighbor 2.0 bin 
+neigh_modify delay 0
+newton on
+read_data ./ws2_wse2_57_disloc_single.lmp
+
+mass 3 183.84
+mass 1 32.065
+mass 2 78.97
+
+group W type 3
+group Se type 2
+group S type 1
+
+variable W_plane_height equal ave(z)
+compute avg_z W reduce ave z
+variable W_plane_height equal 2.095
+
+variable W_threshold equal 1.5
+variable S_Se_threshold equal 2.5
+
+variable Wtemp equal 80
+variable Setemp equal 55
+variable Stemp equal 55
+variable ini_npt_temp equal 10
+region bottom_layer block 0.0 116 0.0 44.2 0.0 2.2
+group bottom_layer region bottom_layer
+
+fix substrate all wall/lj93 zlo 0.0 0.1 2.3 2.5
+#fix freeze bottom_layer setforce 0.0 0.0 0.0
+
+pair_style reaxff NULL
+pair_coeff * * ./ffield.reax.wses  S Se W
+fix qeq_all all qeq/reaxff 1 0.0 10 1e-6 reaxff
+fix charge all property/atom q
+fix fix_momentum all momentum 1 linear 1 1 1 rescale angular
+#fix oz all enforce2d
+compute disp all displace/atom
+
+timestep 0.5
+min_style cg
+minimize 1e-8 1e-8 5000 5000
+
+fix relax_all  all npt temp ${ini_npt_temp} ${ini_npt_temp} $(100.0*dt) xy 0.0 0.0 $(1000.0*dt) y 0.0 0.0 $(1000.0*dt)
+unfix relax_all
+#velocity all create 300.0 4928459 mom yes rot yes dist gaussian
+
+thermo 100
+thermo_style custom step temp pe etotal
+thermo_modify lost ignore flush yes
+dump anneal all custom 100 ws2towse2_57disloc_single.dump id type x y z  c_disp[1] c_disp[2] c_disp[3]
+
+##1st :Heating
+fix heat_W W nvt temp ${Wtemp} ${Wtemp} $(100.0*dt)
+fix heat_Se Se nvt temp ${Setemp} ${Setemp} $(100.0*dt)
+fix heat_S S nvt temp ${Stemp} ${Stemp} $(100.0*dt)
+##fix oz all enforce2d
+run 5000
+unfix heat_W
+unfix heat_Se
+unfix heat_S
+#unfix freeze
+#
+
+variable W_out_condition atom "abs(z - v_W_plane_height) > v_W_threshold"
+variable S_out_condition atom "abs(z - v_W_plane_height) > v_S_Se_threshold"
+variable Se_out_condition atom "abs(z - v_W_plane_height) > v_S_Se_threshold"
+
+group W_out_of_plane_atoms dynamic W var W_out_condition
+group S_out_of_plane_atoms dynamic S var S_out_condition
+group Se_out_of_plane_atoms dynamic Se var Se_out_condition
+##2nd :High-T Relaxation
+fix relax_all  all npt temp 60.0 60.0 $(100.0*dt) xy 0.0 0.0 $(1000.0*dt) y 0.0 0.0 $(1000.0*dt)
+#fix relax_W W nvt temp 1100.0 1100.0 $(100.0*dt)
+#fix relax_Se Se nvt temp 900.0 900.0 $(100.0*dt)
+#fix relax_S  S nvt temp 600.0 600.0 $(100.0*dt)
+run 25000
+
+variable W_out_num equal count(W_out_of_plane_atoms)
+variable S_out_num equal count(S_out_of_plane_atoms)
+variable Se_out_num equal count(Se_out_of_plane_atoms)
+print "Number of W atoms significantly out of plane: ${W_out_num}"
+print "Number of S atoms significantly out of plane: ${S_out_num}"
+print "Number of Se atoms significantly out of plane: ${Se_out_num}"
+delete_atoms group W_out_of_plane_atoms
+delete_atoms group S_out_of_plane_atoms
+delete_atoms group Se_out_of_plane_atoms
+#unfix relax_W
+#unfix relax_Se
+#unfix relax_S
+unfix relax_all
+#
+##3rd :Cooling
+fix cool_W  W nvt temp ${Wtemp} ${Wtemp} $(100.0*dt)
+fix cool_Se Se nvt temp ${Setemp} ${Setemp} $(100.0*dt)
+fix cool_S  S nvt temp ${Stemp} ${Stemp} $(100.0*dt)
+run 5000
+unfix cool_W
+unfix cool_Se
+unfix cool_S
+#
+##4th :Low-T Relaxation
+fix relax2 all nvt temp 10.0 10.0 $(100.0*dt)
+run 5000
+unfix relax2
+#
+min_style cg
+minimize 1e-8 1e-8 5000 5000
