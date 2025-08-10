@@ -7,7 +7,7 @@
   outputs = { nixpkgs, my_lammps, ... }:
     let
       pkgsFor = { system, cudaSupport }: import nixpkgs {
-        inherit system; overlays = [ my_lammps.overlays.default ];
+        inherit system;
         config = {
           allowUnfree = true;
           inherit cudaSupport;
