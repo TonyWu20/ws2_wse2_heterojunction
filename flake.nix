@@ -29,11 +29,7 @@
             (cmakeBool "Kokkos_ARCH_${strings.toUpper kokkosCudaArch}" true)
             (cmakeBool "Kokkos_ARCH_NATIVE" true)
           ];
-          lammps = { cudaArch, kokkosCudaArch }: my_lammps.lammps {
-            gpuExtraOptions = gpuOptions cudaArch;
-            kokkosOptios = setKokkosOptions kokkosCudaArch;
-            inherit pkgs;
-          };
+          lammps = my_lammps.packages.x86_64-linux.default;
           buildInputs = with pkgs.python313Packages; [
             pkgs.python313
             pip
@@ -48,8 +44,7 @@
             packages = with pkgs; [
               fish
               mpi
-              (lammps
-                { cudaArch = "sm_61"; kokkosCudaArch = "pascal61"; })
+              lammps
             ];
             venvDir = "./.venv";
           };
@@ -58,8 +53,11 @@
             packages = with pkgs; [
               fish
               mpi
-              (lammps
-                { cudaArch = "sm_90"; kokkosCudaArch = "hopper90"; })
+              (lammps.overrideAttrs
+                {
+                  gpuExtraOptions = gpuOptions "sm_90";
+                  kokkosOptions = setKokkosOptions "hopper90";
+                })
             ];
             venvDir = "./.venv";
           };
