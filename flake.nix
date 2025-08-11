@@ -58,7 +58,7 @@
               lammps
             ];
             shellHook = ''
-              export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libcuda.so.1
+              export LD_PRELOAD=/usr/lib/libcuda.so.1
             '';
           };
           klt = pkgs.mkShell {
