@@ -37,21 +37,24 @@ translate_part(
     wse2_upper,
     to_shift_w,
     [i / 8 for i in range(8, 0, -1)],
-    translation_vec_by_a_wse2 * 0.7,
+    translation_vec_by_a_wse2 * 1.1,
 )
 # Stretch the row of W down
 # to_shift_w is ordered from bottom to top
 # the top one receives the strongest displacement
 print("WSe2 lower w")
 translate_part(
-    wse2, to_shift_w, [i / 8 for i in range(1, 9)], translation_vec_by_a_wse2 * -1 * 0.7
+    wse2,
+    to_shift_w,
+    [i / 8 for i in range(0, 8)],
+    translation_vec_by_a_wse2 * -1 * 0.8,
 )
 translation_vec_by_a_ws2 = np.array([-1 / 6, 3**0.5 / 6, 0.0]) * a_WS2
 # Stretch the row of S up
 to_shift_s_upper = [
     (id, coord)
     for (id, coord) in enumerate(ws2.get_scaled_positions())
-    if 0.875 < coord[0] < 1.00 and coord[1] > 0.50
+    if 0.876 < coord[0] < 1.00 and coord[1] > 0.50
 ]
 to_shift_s_upper_len = int(len(to_shift_s_upper) / 2)
 # the displacement becomes stronger
@@ -93,15 +96,16 @@ hetero.set_pbc([False, True, False])
 hetero.center(10, axis=2)
 hetero.center(20, axis=0)
 hetero.positions[:, 2] -= 9.5
-unit_ws2.positions[0] += hetero.cell[0] * 0.50
-unit_ws2.positions[0] += hetero.cell[1] * 0.4568
-unit_ws2.positions[0] += hetero.cell[2] * 0.09034
-unit_ws2.positions[1:3] += hetero.cell[0] * 0.495
-unit_ws2.positions[1:3] += hetero.cell[1] * 0.455
-unit_ws2.positions[1:3] += hetero.cell[2] * 0.09034
+unit_ws2.positions[0] += hetero.cell[0] * 0.51479
+unit_ws2.positions[0] += hetero.cell[1] * 0.46875
+unit_ws2.positions[0, 2] += 5.095
+unit_ws2.positions[1:3] += hetero.cell[0] * 0.51479
+unit_ws2.positions[1:3] += hetero.cell[1] * 0.46875
+unit_ws2.positions[1:3, 2] += 5.005
 unit_ws2.set_cell(hetero.cell)
+del unit_ws2[[2]]
 print(unit_ws2.get_scaled_positions())
-print(unit_ws2.get_positions()[1:3])
+print(unit_ws2.get_positions()[:])
 hetero += unit_ws2
 
 
