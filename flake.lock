@@ -5,11 +5,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1754854977,
-        "narHash": "sha256-u3iolJKnDOow0+eEw7znI79TMkSsm1PwvGwtZ7DngR0=",
+        "lastModified": 1754881268,
+        "narHash": "sha256-gKpcEjR1jm5F/ycnIFzswjfWb9VLhPPN9vg9PXN/HJ8=",
         "owner": "TonyWu20",
         "repo": "lammps_flake",
-        "rev": "801c19f755641ccd6f1895d4c9d06f4843e35694",
+        "rev": "2f5039088f78331545f7a42dd1d53113d6561732",
         "type": "github"
       },
       "original": {

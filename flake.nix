@@ -43,7 +43,12 @@
             inherit buildInputs;
             packages = with pkgs; [
               fish
-              mpi
+              (mpi.overrideAttrs (final: prev: {
+                configureFlags = prev.configureFlags ++ [
+                  "--with-ucx=${pkgs.lib.getDev pkgs.ucx}"
+                  "--with-ucx-libdir=${pkgs.lib.getLib pkgs.ucx}/lib"
+                ];
+              }))
               lammps
             ];
             venvDir = "./.venv";
@@ -53,7 +58,7 @@
             packages = with pkgs; [
               fish
               mpi
-              (lammps.overrideAttrs
+              (lammps.override
                 {
                   gpuExtraOptions = gpuOptions "sm_90";
                   kokkosOptions = setKokkosOptions "hopper90";
