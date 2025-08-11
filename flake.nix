@@ -47,6 +47,7 @@
           ];
           packages = with pkgs; [
             fish
+            pkgs.python313Packages.jupyter
           ];
         in
         {
@@ -93,6 +94,7 @@
             packages = with pkgs; [
               fish
               lammpsMac
+              pkgs.python313Packages.jupyter
             ];
             venvDir = "./.venv";
           };
