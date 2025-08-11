@@ -39,22 +39,31 @@
             pylint-venv
             pkgs.cudaPackages.cudatoolkit
           ];
+          packages = with pkgs; [
+            fish
+            mpi
+          ];
         in
         {
           default = pkgs.mkShell {
             inherit buildInputs;
-            packages = with pkgs; [
-              fish
-              mpi
+            packages = packages ++ [
               lammps
             ];
             venvDir = "./.venv";
           };
+          arch = pkgs.mkShell {
+            inherit buildInputs;
+            packages = packages ++ [
+              lammps
+            ];
+            shellHook = ''
+              export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libcuda.so.1
+            '';
+          };
           klt = pkgs.mkShell {
             inherit buildInputs;
-            packages = with pkgs; [
-              fish
-              mpi
+            packages = packages ++ [
               lammpsKlt
             ];
             venvDir = "./.venv";
