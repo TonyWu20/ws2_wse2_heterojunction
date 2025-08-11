@@ -6,11 +6,12 @@
   };
   outputs = { nixpkgs, my_lammps, ... }:
     let
-      pkgsFor = { system, cudaSupport }: import nixpkgs {
+      pkgsFor = { system, cudaSupport, overlays ? [ ] }: import nixpkgs {
         inherit system;
         config = {
           allowUnfree = true;
           inherit cudaSupport;
+          inherit overlays;
         };
       };
     in
@@ -30,6 +31,7 @@
             (cmakeBool "Kokkos_ARCH_NATIVE" true)
           ];
           lammps = my_lammps.packages.x86_64-linux.default;
+          lammpsKlt = my_lammps.packages.x86_64-linux.sm_90;
           buildInputs = with pkgs.python313Packages; [
             pkgs.python313
             pip
@@ -37,34 +39,37 @@
             pylint-venv
             pkgs.cudaPackages.cudatoolkit
           ];
+          packages = with pkgs; [
+            fish
+            mpi
+          ];
         in
         {
           default = pkgs.mkShell {
             inherit buildInputs;
-            packages = with pkgs; [
-              fish
-              (mpi.overrideAttrs (final: prev: {
-                configureFlags = prev.configureFlags ++ [
-                  "--with-ucx=${pkgs.lib.getDev pkgs.ucx}"
-                  "--with-ucx-libdir=${pkgs.lib.getLib pkgs.ucx}/lib"
-                ];
-              }))
+            packages = packages ++ [
               lammps
             ];
             venvDir = "./.venv";
           };
+          arch = pkgs.mkShell {
+            inherit buildInputs;
+            packages = packages ++ [
+              lammps
+            ];
+            shellHook = ''
+              export LD_PRELOAD=/usr/lib/libcuda.so.1
+            '';
+          };
           klt = pkgs.mkShell {
             inherit buildInputs;
-            packages = with pkgs; [
-              fish
-              mpi
-              (lammps.override
-                {
-                  gpuExtraOptions = gpuOptions "sm_90";
-                  kokkosOptions = setKokkosOptions "hopper90";
-                })
+            packages = packages ++ [
+              lammpsKlt
             ];
             venvDir = "./.venv";
+            shellHook = ''
+              export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libcuda.so.1
+            '';
           };
         };
       devShells.aarch64-darwin =
