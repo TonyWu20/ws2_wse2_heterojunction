@@ -18,20 +18,26 @@
     {
       devShells.x86_64-linux =
         let
-          pkgs = pkgsFor { system = "x86_64-linux"; cudaSupport = true; };
-          gpuOptions = cudaArch: [
-            "GPU_ARCH=${cudaArch}"
-            "GPU_API=CUDA"
-            "CUDA_MPS_SUPPORT=on"
-          ];
-          setKokkosOptions = kokkosCudaArch: with pkgs.lib;[
-            (cmakeBool "Kokkos_ENABLE_OPENMP" true)
-            (cmakeBool "Kokkos_ENABLE_CUDA" true)
-            (cmakeBool "Kokkos_ARCH_${strings.toUpper kokkosCudaArch}" true)
-            (cmakeBool "Kokkos_ARCH_NATIVE" true)
-          ];
+          pkgs = pkgsFor {
+            system = "x86_64-linux";
+            cudaSupport = true;
+            overlays = [
+              (final: prev: {
+                mpi = prev.mpi.overrideAttrs {
+                  configureFlags = prev.mpi.configureFlags ++ [
+                    "--with-ucx=${pkgs.lib.getDev pkgs.ucx}"
+                    "--with-ucx-libdir=${pkgs.lib.getLib pkgs.ucx}/lib"
+                    "--enable-mca-no-build=btl-uct"
+                  ];
+                };
+              })
+            ];
+          };
           lammps = my_lammps.packages.x86_64-linux.default;
-          lammpsKlt = my_lammps.packages.x86_64-linux.sm_90;
+          lammpsKlt = lammps.override {
+            gpuArch = "sm_90";
+            kokkosGpuArch = "hopper90";
+          };
           buildInputs = with pkgs.python313Packages; [
             pkgs.python313
             pip
@@ -41,7 +47,6 @@
           ];
           packages = with pkgs; [
             fish
-            mpi
           ];
         in
         {
@@ -75,13 +80,6 @@
       devShells.aarch64-darwin =
         let
           pkgs = pkgsFor { system = "aarch64-darwin"; cudaSupport = false; };
-          gpuExtraOptions = [
-            "GPU_API=opencl"
-          ];
-          kokkosOptions = with pkgs.lib; [
-            (cmakeBool "Kokkos_ENABLE_OPENMP" true)
-            (cmakeBool "Kokkos_ARCH_NATIVE" true)
-          ];
           lammpsMac = my_lammps.packages.aarch64-darwin.default;
         in
         {
@@ -94,7 +92,6 @@
             ];
             packages = with pkgs; [
               fish
-              mpi
               lammpsMac
             ];
             venvDir = "./.venv";
