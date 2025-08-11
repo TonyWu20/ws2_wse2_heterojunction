@@ -6,11 +6,12 @@
   };
   outputs = { nixpkgs, my_lammps, ... }:
     let
-      pkgsFor = { system, cudaSupport }: import nixpkgs {
+      pkgsFor = { system, cudaSupport, overlays ? [ ] }: import nixpkgs {
         inherit system;
         config = {
           allowUnfree = true;
           inherit cudaSupport;
+          inherit overlays;
         };
       };
     in
@@ -30,6 +31,7 @@
             (cmakeBool "Kokkos_ARCH_NATIVE" true)
           ];
           lammps = my_lammps.packages.x86_64-linux.default;
+          lammpsKlt = my_lammps.packages.x86_64-linux.sm_90;
           buildInputs = with pkgs.python313Packages; [
             pkgs.python313
             pip
@@ -53,13 +55,12 @@
             packages = with pkgs; [
               fish
               mpi
-              (lammps.overrideAttrs
-                {
-                  gpuExtraOptions = gpuOptions "sm_90";
-                  kokkosOptions = setKokkosOptions "hopper90";
-                })
+              lammpsKlt
             ];
             venvDir = "./.venv";
+            shellHook = ''
+              export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libcuda.so.1
+            '';
           };
         };
       devShells.aarch64-darwin =
